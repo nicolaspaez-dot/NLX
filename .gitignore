@@ -1,0 +1,34 @@
+# Build directory
+build/
+
+# Database files
+data/*.db
+*.db
+
+# Configuration files (user-specific)
+config/local.conf
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+
+# Export files
+exports/
+/tmp/nlx_exports/ 
