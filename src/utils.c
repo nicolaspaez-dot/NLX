@@ -1,11 +1,22 @@
+#define _POSIX_C_SOURCE 200809L
 #include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/types.h>
 #include <time.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <sys/wait.h>
+
+// Definir IFNAMSIZ si no está definido
+#ifndef IFNAMSIZ
+#define IFNAMSIZ 16
+#endif
 
 // Convertir bytes a MB/s
 double bytes_to_mbps(uint64_t bytes, double time_diff) {
@@ -87,6 +98,28 @@ char* get_interface_name(void) {
     interface_name[sizeof(interface_name) - 1] = '\0';
     
     return interface_name;
+}
+
+// Obtener IP de una interfaz (real, usando comando ip)
+char* get_interface_ip(const char* interface) {
+    char* ip = malloc(32); // Suficiente para una IP
+    if (!ip) return NULL;
+    ip[0] = '\0';
+
+    char command[256];
+    snprintf(command, sizeof(command), "ip -4 addr show %s | grep 'inet ' | awk '{print $2}' | cut -d'/' -f1", interface);
+    FILE* fp = popen(command, "r");
+    if (fp) {
+        if (fgets(ip, 32, fp) != NULL) {
+            ip[strcspn(ip, "\n")] = 0;
+        } else {
+            strcpy(ip, "No disponible");
+        }
+        pclose(fp);
+    } else {
+        strcpy(ip, "No disponible");
+    }
+    return ip;
 }
 
 // Obtener timestamp actual

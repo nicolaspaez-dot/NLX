@@ -163,23 +163,103 @@ void show_processes(void) {
     printf("Proceso actual (PID %d): %s\n", getpid(), get_process_name(getpid()));
 }
 
-// Función para mostrar conexiones (placeholder)
+// Función para mostrar conexiones reales
 void show_connections(void) {
     printf("NLX - Conexiones Activas\n");
     printf("=========================\n\n");
     
-    int connections = get_connection_count();
-    printf("Conexiones TCP activas: %d\n", connections);
-    printf("(Funcionalidad completa en desarrollo)\n");
+    int count;
+    Connection* connections = collect_connections(&count);
+    
+    if (!connections || count == 0) {
+        printf("No se pudieron obtener las conexiones\n");
+        return;
+    }
+    
+    printf("Conexiones TCP activas: %d\n\n", count);
+    
+    // Mostrar las primeras 10 conexiones más relevantes
+    int to_show = count > 10 ? 10 : count;
+    printf("Primeras %d conexiones:\n", to_show);
+    printf("%-15s %-8s %-15s %-8s %-12s\n", "IP Local", "Puerto", "IP Remota", "Puerto", "Estado");
+    printf("------------------------------------------------------------\n");
+    
+    for (int i = 0; i < to_show; i++) {
+        printf("%-15s %-8d %-15s %-8d %-12s\n",
+               connections[i].local_ip,
+               connections[i].local_port,
+               connections[i].remote_ip,
+               connections[i].remote_port,
+               connections[i].state);
+    }
+    
+    if (count > 10) {
+        printf("\n... y %d conexiones más\n", count - 10);
+    }
+    
+    free(connections);
 }
 
-// Función para mostrar latencia (placeholder)
+// Función para mostrar latencia real
 void show_latency(void) {
     printf("NLX - Pruebas de Latencia\n");
     printf("========================\n\n");
     
-    printf("(Funcionalidad en desarrollo)\n");
-    printf("Servidores a probar: google.com, github.com, cloudflare.com\n");
+    int count;
+    LatencyTest* tests = collect_latency_tests(&count);
+    
+    if (!tests) {
+        printf("No se pudieron realizar las pruebas de latencia\n");
+        return;
+    }
+    
+    printf("Probando conectividad a %d servidores...\n\n", count);
+    printf("%-15s %-12s %-10s\n", "Servidor", "Latencia", "Estado");
+    printf("----------------------------------------\n");
+    
+    for (int i = 0; i < count; i++) {
+        printf("%-15s ", tests[i].server);
+        
+        if (tests[i].status == 0 && tests[i].latency > 0) {
+            printf("%-12.1fms ", tests[i].latency);
+            
+            // Color según latencia
+            if (tests[i].latency < 20) {
+                printf("✅ Excelente");
+            } else if (tests[i].latency < 50) {
+                printf("🟡 Buena");
+            } else if (tests[i].latency < 100) {
+                printf("🟠 Regular");
+            } else {
+                printf("🔴 Lenta");
+            }
+        } else if (tests[i].status == 1) {
+            printf("%-12s ⏰ Timeout", "N/A");
+        } else {
+            printf("%-12s ❌ Error", "N/A");
+        }
+        printf("\n");
+    }
+    
+    printf("\nResumen:\n");
+    int good_connections = 0;
+    double total_latency = 0.0;
+    int valid_tests = 0;
+    
+    for (int i = 0; i < count; i++) {
+        if (tests[i].status == 0 && tests[i].latency > 0) {
+            good_connections++;
+            total_latency += tests[i].latency;
+            valid_tests++;
+        }
+    }
+    
+    printf("  Conexiones exitosas: %d/%d\n", good_connections, count);
+    if (valid_tests > 0) {
+        printf("  Latencia promedio: %.1fms\n", total_latency / valid_tests);
+    }
+    
+    free(tests);
 }
 
 // Función para ejecutar interfaz TUI

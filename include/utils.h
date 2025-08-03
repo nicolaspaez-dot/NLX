@@ -62,4 +62,7 @@ char* get_interface_name(void);
 time_t get_current_timestamp(void);
 void sleep_ms(int milliseconds);
 
+// Funciones de interfaz
+char* get_interface_ip(const char* interface);
+
 #endif // UTILS_H
