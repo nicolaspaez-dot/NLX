@@ -11,7 +11,7 @@ Crear un monitor de red estilo `btop` pero especializado en análisis de red, qu
 - Conexiones activas
 - Métricas de latencia
 - Alertas de red
-- Datos históricos
+- Información de procesos de red
 
 ## 🏗️ Arquitectura del Proyecto
 
@@ -23,19 +23,16 @@ NLX/
 │   ├── ui.c               # Interfaz TUI con ncurses
 │   ├── collector.c        # Recolección de métricas de red
 │   ├── analyzer.c         # Análisis de datos y alertas
-│   ├── storage.c          # Operaciones de base de datos SQLite
 │   ├── renderer.c         # Renderizado de gráficos ASCII
 │   └── utils.c            # Funciones utilitarias
 ├── include/               # Headers
 │   ├── ui.h               # Definiciones de interfaz TUI
 │   ├── collector.h        # API de recolección de métricas
 │   ├── analyzer.h         # Funciones de análisis
-│   ├── storage.h          # Operaciones de base de datos
 │   ├── renderer.h         # Funciones de renderizado
 │   └── utils.h            # Utilidades comunes
 ├── config/                # Configuración
 │   └── nlx.conf           # Archivo de configuración
-├── data/                  # Base de datos SQLite
 ├── build/                 # Ejecutables compilados
 ├── Makefile               # Compilación
 ├── install.sh             # Script de instalación
@@ -54,8 +51,6 @@ collector.c (recolecta métricas cada X segundos)
     ↓
 analyzer.c (procesa y detecta alertas)
     ↓
-storage.c (guarda en SQLite)
-    ↓
 renderer.c (prepara gráficos ASCII)
     ↓
 ui.c (dibuja en pantalla con ncurses)
@@ -68,7 +63,6 @@ ui.c (dibuja en pantalla con ncurses)
 ### Bibliotecas Principales
 - **ncurses** - Interfaz TUI
 - **libpcap** - Captura de paquetes de red
-- **SQLite3** - Almacenamiento de datos históricos
 - **libcurl** - Peticiones HTTP para pruebas de latencia
 - **pthread** - Multithreading para operaciones concurrentes
 
@@ -78,7 +72,6 @@ ui.c (dibuja en pantalla con ncurses)
 - `/proc/net/udp` - Conexiones UDP activas
 - `/proc/[pid]/fd/` - Descriptores de archivo de procesos
 - `ping` - Pruebas de latencia
-- `nvidia-smi` - Información de GPU (si está disponible)
 
 ## 📊 Funcionalidades Planificadas
 
@@ -103,14 +96,13 @@ ui.c (dibuja en pantalla con ncurses)
 ### 4. Sistema de Alertas
 - **Tipos**: Alto uso de ancho de banda, puertos sospechosos, latencia alta
 - **Severidad**: low, medium, high, critical
-- **Acciones**: Notificaciones en pantalla, logging
+- **Acciones**: Notificaciones en pantalla
 - **Configuración**: Umbrales personalizables
 
-### 5. Datos Históricos
-- **Almacenamiento**: SQLite en `/var/lib/nlx/nlx.db`
-- **Tablas**: bandwidth_history, connections, alerts, latency_history
-- **Retención**: Configurable (por defecto 30 días)
-- **Exportación**: CSV y JSON
+### 5. Información de Procesos
+- **Monitoreo**: Procesos que usan red
+- **Métricas**: Bytes por proceso, conexiones por proceso
+- **Visualización**: Lista ordenada por uso de red
 
 ## 🎮 Comandos de Usuario
 
@@ -123,8 +115,7 @@ nx connections        # Solo conexiones activas
 nx bandwidth          # Solo monitoreo de ancho de banda
 nx latency            # Solo métricas de latencia
 nx alerts             # Alertas y notificaciones
-nx history            # Datos históricos
-nx export             # Exportar datos
+nx processes          # Procesos que usan red
 ```
 
 ### Modos de Interfaz
@@ -132,8 +123,8 @@ nx export             # Exportar datos
 - **Conexiones**: Enfocado en conexiones activas
 - **Ancho de banda**: Uso de ancho de banda y gráficos
 - **Latencia**: Métricas de conectividad y ping
-- **Alertas**: Alertas actuales e historial
-- **Historial**: Datos históricos y tendencias
+- **Alertas**: Alertas actuales
+- **Procesos**: Procesos que usan red
 
 ## ⚙️ Configuración
 
@@ -141,7 +132,6 @@ nx export             # Exportar datos
 ```ini
 [general]
 refresh_rate = 2              # Segundos entre actualizaciones
-data_retention_days = 30      # Días para mantener datos históricos
 interface = auto              # Interfaz de red a monitorear
 
 [latency]
@@ -152,53 +142,6 @@ timeout = 5000                # Timeout en milisegundos
 bandwidth_threshold = 90      # Porcentaje para alertas de ancho de banda
 suspicious_ports = 22,23,3389 # Puertos considerados sospechosos
 max_connections = 1000        # Máximo de conexiones antes de alerta
-
-[export]
-default_format = csv          # Formato por defecto para exportación
-auto_export = false           # Exportación automática
-export_path = /tmp/nlx_exports
-```
-
-## 🗄️ Base de Datos
-
-### Tablas SQLite
-```sql
--- Historial de ancho de banda
-CREATE TABLE bandwidth_history (
-    timestamp INTEGER,
-    interface TEXT,
-    rx_bytes INTEGER,
-    tx_bytes INTEGER,
-    rx_speed REAL,
-    tx_speed REAL
-);
-
--- Conexiones activas
-CREATE TABLE connections (
-    timestamp INTEGER,
-    local_ip TEXT,
-    local_port INTEGER,
-    remote_ip TEXT,
-    remote_port INTEGER,
-    state TEXT,
-    process TEXT
-);
-
--- Alertas generadas
-CREATE TABLE alerts (
-    timestamp INTEGER,
-    type TEXT,
-    message TEXT,
-    severity TEXT
-);
-
--- Historial de latencia
-CREATE TABLE latency_history (
-    timestamp INTEGER,
-    server TEXT,
-    latency REAL,
-    status TEXT
-);
 ```
 
 ## 🎨 Interfaz de Usuario
@@ -230,7 +173,7 @@ CREATE TABLE latency_history (
 │  • Conexión sospechosa en puerto 22 - hace 2m               │
 │                                                             │
 │  [Q] Salir  [R] Actualizar  [1] Conexiones  [2] Ancho de banda │
-│  [3] Latencia  [4] Alertas  [5] Historial  [C] Config      │
+│  [3] Latencia  [4] Alertas  [5] Procesos  [C] Config      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -243,21 +186,20 @@ CREATE TABLE latency_history (
 - [x] Headers básicos
 - [x] Compilación sin errores
 - [x] Ejecutable básico funcionando
+- [x] Parsing de argumentos en main.c
+- [x] Interfaz TUI con ncurses
+- [x] Recolección de métricas de red
+- [x] Implementación de utils.c
+- [x] Implementación de collector.c
 
 ### 🚧 En Progreso
-- [ ] Definición de estructuras de datos
-- [ ] Implementación de utils.c
-- [ ] Implementación de collector.c
+- [ ] Sistema de análisis y alertas
 
 ### 📋 Pendiente
-- [ ] Parsing de argumentos en main.c
-- [ ] Interfaz TUI con ncurses
-- [ ] Recolección de métricas de red
-- [ ] Sistema de análisis y alertas
-- [ ] Almacenamiento en SQLite
 - [ ] Renderizado de gráficos ASCII
 - [ ] Sistema de configuración
-- [ ] Exportación de datos
+- [ ] Pruebas de latencia
+- [ ] Información detallada de procesos
 - [ ] Pruebas y debugging
 
 ## 🛠️ Comandos de Desarrollo
@@ -273,6 +215,7 @@ make clean        # Limpiar build
 ```bash
 ./build/nx        # Ejecutar versión de desarrollo
 ./build/nx help   # Probar comando help
+./build/nx tui    # Probar interfaz TUI
 ```
 
 ### Instalación
@@ -306,22 +249,21 @@ make uninstall    # Desinstalar
 ### Desafíos Identificados
 1. **Captura de paquetes**: Requiere permisos especiales
 2. **Interfaz TUI**: Manejo de eventos y refresco
-3. **Base de datos**: Operaciones concurrentes
-4. **Configuración**: Parsing de archivo INI
+3. **Configuración**: Parsing de archivo INI
 
 ### Decisiones de Diseño
-1. **SQLite**: Base de datos ligera y sin servidor
-2. **ncurses**: Biblioteca estándar para TUI
-3. **Modularidad**: Cada componente es independiente
-4. **Configuración**: Archivo INI simple
+1. **ncurses**: Biblioteca estándar para TUI
+2. **Modularidad**: Cada componente es independiente
+3. **Configuración**: Archivo INI simple
+4. **Tiempo real**: Sin almacenamiento persistente
 
 ## 🎯 Próximos Pasos
 
-1. **Definir estructuras de datos** en utils.h
-2. **Implementar funciones básicas** en utils.c
-3. **Crear parsing de argumentos** en main.c
-4. **Implementar recolección de métricas** en collector.c
-5. **Desarrollar interfaz TUI** en ui.c
+1. **Implementar sistema de alertas** en analyzer.c
+2. **Desarrollar gráficos ASCII** en renderer.c
+3. **Sistema de configuración** con nlx.conf
+4. **Pruebas de latencia** funcionales
+5. **Mejorar información de procesos**
 
 ## 📚 Referencias
 
@@ -334,5 +276,5 @@ make uninstall    # Desinstalar
 ---
 
 **Última actualización**: [Fecha actual]
-**Versión del proyecto**: 0.1.0 (estructura básica)
-**Estado**: En desarrollo inicial 
+**Versión del proyecto**: 0.2.0 (TUI funcional)
+**Estado**: Interfaz TUI implementada 

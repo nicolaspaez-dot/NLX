@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Iinclude -Wall -Wextra -std=c99
-LIBS=-lncurses -lpcap -lsqlite3 -lcurl -lpthread
-SRC=src/main.c src/ui.c src/collector.c src/analyzer.c src/storage.c src/renderer.c src/utils.c
+LIBS=-lncurses -lpcap -lcurl -lpthread
+SRC=src/main.c src/ui.c src/collector.c src/analyzer.c src/renderer.c src/utils.c
 OUT=build/nx
 
 all:
