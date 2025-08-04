@@ -205,7 +205,7 @@ Lista de todas las interfaces de red disponibles en tu sistema y su estado actua
 
 ---
 
-## 🎉 **¡Disfruta Monitoreando tu Red!**
+**¡Disfruta Monitoreando tu Red!**
 
 NLX te proporciona una vista completa y en tiempo real de tu actividad de red. Úsalo para:
 - **Optimizar tu conexión**
@@ -213,8 +213,7 @@ NLX te proporciona una vista completa y en tiempo real de tu actividad de red. �
 - **Monitorear aplicaciones**
 - **Aprender sobre redes**
 
-**¡Gracias por usar NLX!** 🚀
+**¡Gracias por usar NLX!** 
 
 ---
 
-*Documento generado automáticamente por NLX v1.0* 

@@ -27,6 +27,11 @@ void init_ui(void) {
     cbreak();               // Modo cbreak para input inmediato
     nodelay(stdscr, TRUE);  // getch() no bloquea
     
+    // Configuraciones adicionales para evitar parpadeo
+    leaveok(stdscr, TRUE);  // No mover cursor al final de operaciones
+    scrollok(stdscr, FALSE); // Deshabilitar scroll automático
+    idlok(stdscr, FALSE);   // No usar líneas de inserción/eliminación
+    
     setup_colors();
     
     // Inicializar gráficos
@@ -427,7 +432,8 @@ void run_tui(void) {
     
     int ch;
     while (1) {
-        clear();
+        // Limpiar pantalla de manera más eficiente
+        werase(stdscr);
         
         // Dibujar interfaz
         draw_header();
@@ -436,7 +442,9 @@ void run_tui(void) {
         draw_interfaces_section();
         draw_footer();
         
-        refresh();
+        // Usar doble buffer para actualización sin parpadeo
+        wnoutrefresh(stdscr);
+        doupdate();
         
         // Manejar input
         ch = getch();
@@ -448,8 +456,8 @@ void run_tui(void) {
             continue;
         }
         
-        // Esperar un poco
-        sleep(1);  // 1 segundo entre actualizaciones
+        
+        sleep(1);  
     }
     
     cleanup_ui();
