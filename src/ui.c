@@ -400,17 +400,19 @@ void draw_interfaces_section(void) {
         // Mostrar interfaces activas
         int line_count = 0;
         for (int i = 0; i < interface_count && i < 3; i++) {
-            int is_active = is_interface_active(interfaces[i]);
-            if (is_active) {
-                attron(COLOR_PAIR(COLOR_SUCCESS));
-                mvprintw(30 + line_count, 4, "* %s = activa", interfaces[i]);
-                attroff(COLOR_PAIR(COLOR_SUCCESS));
-            } else {
-                attron(COLOR_PAIR(COLOR_WARNING));
-                mvprintw(30 + line_count, 4, "o %s = inactiva", interfaces[i]);
-                attroff(COLOR_PAIR(COLOR_WARNING));
+            if (interfaces[i]) {
+                int is_active = is_interface_active(interfaces[i]);
+                if (is_active) {
+                    attron(COLOR_PAIR(COLOR_SUCCESS));
+                    mvprintw(30 + line_count, 4, "* %s = activa", interfaces[i]);
+                    attroff(COLOR_PAIR(COLOR_SUCCESS));
+                } else {
+                    attron(COLOR_PAIR(COLOR_WARNING));
+                    mvprintw(30 + line_count, 4, "o %s = inactiva", interfaces[i]);
+                    attroff(COLOR_PAIR(COLOR_WARNING));
+                }
+                line_count++;
             }
-            line_count++;
         }
         
         // Información adicional
@@ -418,7 +420,9 @@ void draw_interfaces_section(void) {
         
         // Liberar memoria
         for (int i = 0; i < interface_count; i++) {
-            free(interfaces[i]);
+            if (interfaces[i]) {
+                free(interfaces[i]);
+            }
         }
         free(interfaces);
     } else {

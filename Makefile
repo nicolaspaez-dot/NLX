@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-Iinclude -Wall -Wextra -std=c99
-LIBS=-lncurses -lpcap -lcurl -lpthread
+LIBS=-lncursesw -lpcap -lcurl -lpthread
 SRC=src/main.c src/ui.c src/collector.c src/renderer.c src/utils.c
 OUT=build/nx
 

@@ -10,6 +10,8 @@
 #include <net/if.h>     // Para if_nametoindex
 #include <sys/wait.h>   // Para popen
 
+
+
 // Leer estadísticas de una interfaz de red desde /proc/net/dev
 NetworkStats read_interface_stats(const char* interface) {
     NetworkStats stats = {0};
@@ -76,64 +78,65 @@ NetworkStats collect_network_stats(const char* interface) {
 
 // Obtener interfaces de red disponibles
 char** get_available_interfaces(int* count) {
-    char** interfaces = NULL;
-    *count = 0;
-    FILE* file;
-    char line[512];
-    char interface_name[64];
+    // Lista de interfaces comunes en orden de prioridad
+    const char* common_interfaces[] = {
+        "wlan0", "wlan1", "wifi0", "wifi1",  // WiFi
+        "eth0", "enp0s3", "enp7s0", "eno1", "ens33",  // Ethernet
+        "docker0", "br0", "virbr0",  // Virtuales
+        NULL
+    };
     
-    file = fopen("/proc/net/dev", "r");
-    if (!file) {
+    // Contar interfaces que existen
+    *count = 0;
+    for (int i = 0; common_interfaces[i] != NULL; i++) {
+        char path[256];
+        snprintf(path, sizeof(path), "/sys/class/net/%s", common_interfaces[i]);
+        if (access(path, F_OK) == 0) {
+            (*count)++;
+        }
+    }
+    
+    // Si no se encontró ninguna, devolver al menos una
+    if (*count == 0) {
+        *count = 1;
+        char** interfaces = malloc(sizeof(char*));
+        interfaces[0] = malloc(strlen("eth0") + 1);
+        strcpy(interfaces[0], "eth0");
+        return interfaces;
+    }
+    
+    // Crear array con interfaces que existen
+    char** interfaces = malloc(*count * sizeof(char*));
+    if (!interfaces) {
+        *count = 0;
         return NULL;
     }
     
-    // Saltar encabezados
-    fgets(line, sizeof(line), file);
-    fgets(line, sizeof(line), file);
-    
-    // Contar interfaces
-    while (fgets(line, sizeof(line), file)) {
-        if (sscanf(line, "%63s", interface_name) == 1) {
-            char* colon = strchr(interface_name, ':');
-            if (colon) *colon = '\0';
-            
-            // Ignorar lo (loopback)
-            if (strcmp(interface_name, "lo") != 0) {
-                (*count)++;
+    int index = 0;
+    for (int i = 0; common_interfaces[i] != NULL && index < *count; i++) {
+        char path[256];
+        snprintf(path, sizeof(path), "/sys/class/net/%s", common_interfaces[i]);
+        if (access(path, F_OK) == 0) {
+            interfaces[index] = malloc(strlen(common_interfaces[i]) + 1);
+            if (interfaces[index]) {
+                strcpy(interfaces[index], common_interfaces[i]);
+                index++;
             }
         }
     }
     
-    // Asignar memoria y llenar array
-    if (*count > 0) {
-        interfaces = malloc(*count * sizeof(char*));
-        rewind(file);
-        
-        // Saltar encabezados nuevamente
-        fgets(line, sizeof(line), file);
-        fgets(line, sizeof(line), file);
-        
-        int index = 0;
-        while (fgets(line, sizeof(line), file) && index < *count) {
-            if (sscanf(line, "%63s", interface_name) == 1) {
-                char* colon = strchr(interface_name, ':');
-                if (colon) *colon = '\0';
-                
-                if (strcmp(interface_name, "lo") != 0) {
-                    interfaces[index] = malloc(strlen(interface_name) + 1);
-                    strcpy(interfaces[index], interface_name);
-                    index++;
-                }
-            }
-        }
-    }
-    
-    fclose(file);
+    *count = index;
     return interfaces;
 }
 
+
+
 // Verificar si una interfaz está activa
 int is_interface_active(const char* interface) {
+    if (!interface) {
+        return 0;
+    }
+    
     char path[256];
     FILE* file;
     char operstate[32];
